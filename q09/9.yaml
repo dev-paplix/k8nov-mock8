@@ -1,0 +1,58 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: kubernetes.io/azure-file
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: stateful-app-svc
+  labels:
+    app: mysql
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stateful-app
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: "stateful-app-svc"
+  replicas: 3 
+  minReadySeconds: 10 
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        volumeMounts:
+        - name: mysql-mount
+          mountPath: /usr/mnt
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-mount
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "fast-storage"
+      resources:
+        requests:
+          storage: 1Gi

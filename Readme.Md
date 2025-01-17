@@ -1,4 +1,4 @@
-Name:
+Name: Azry Syafiqah Mohamad Nasir
 
 Q1:
 
@@ -85,7 +85,7 @@ Q7:
 
 An application is not accessible due to a Service misconfiguration. Perform the following tasks:
 
-Create a Deployment named broken-service-deployment with 2 replicas using the nginx:1.21 image. The Deployment should expose port 80.
+Create a Deployment named broken-service-deployment with 2 replicas using the nginx:1.21 image. The Deployment should expose port 80.a
 Create a Service named broken-service but intentionally configure it to:
 Use the wrong port mapping (e.g., target port 8080 instead of 80).
 Diagnose why the Service is not working correctly using kubectl describe service and kubectl logs on the Pods.
