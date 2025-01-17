@@ -1,1 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: broken-service-deployment
+  name: broken-service-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: broken-service-deployment
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: broken-service-deployment
+    spec:
+      containers:
+      - image: nginx:1.21
+        name: nginx
+        ports:
+        - containerPort: 80
+        resources: {}
+status: {}
 
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: broken-service
+spec:
+  selector:
+    app: broken-service-deployment
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
