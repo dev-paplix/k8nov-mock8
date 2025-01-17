@@ -1,1 +1,27 @@
-
+kubectl label nodes node01 tier=critical
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: resource-pod
+  name: resource-pod
+spec:
+  containers:
+    - image: busybox:1.34
+      name: resource-pod
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "200m"
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+  nodeSelector:
+    tier: critical
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+c
