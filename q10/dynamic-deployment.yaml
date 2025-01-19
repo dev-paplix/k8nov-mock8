@@ -1,0 +1,59 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: dynamic-storage
+provisioner: kubernetes.io/aws-ebs
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dynamic-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: dynamic-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dynamic-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dynamic-app
+  template:
+    metadata:
+      labels:
+        app: dynamic-app
+    spec:
+      containers:
+      - name: busybox
+        image: busybox:1.34
+        command: ["sh", "-c", "echo 'Hello Kubernetes!' > /data/hello.txt && sleep 3600"]
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: dynamic-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dynamic-service
+spec:
+  selector:
+    app: dynamic-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30001
+  type: NodePort
