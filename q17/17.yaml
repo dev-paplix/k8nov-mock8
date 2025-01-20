@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-scheduler-deployment
+  namespace: kube-system
+  labels:
+    scheduler: my-scheduler
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      scheduler: my-scheduler
+  template:
+    metadata:
+      labels:
+        scheduler: my-scheduler
+    spec:
+      containers:
+      - name: my-scheduler
+        image: kube-scheduler
+        ports:
+        - containerPort: 8080
