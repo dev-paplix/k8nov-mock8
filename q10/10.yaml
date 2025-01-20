@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dynamic-app
+  labels:
+    app: dynamic-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dynamic-app
+  template:
+    metadata:
+      labels:
+        app: dynamic-app
+    spec:
+      containers:
+      - name: busybox
+        image: busybox:1.34
+        command: ["sh", "-c", "echo 'Hello Kubernetes!' > /data/hello.txt && sleep 3600"]
+        volumeMounts:
+        - mountPath: "/data"
+          name: mypd
+        ports:
+        - containerPort: 80
+      volumes:
+      - name: mypd
+        persistentVolumeClaim:
+          claimName: dynamic-pvc
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: dynamic-storage
+provisioner: rancher.io/local-path
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dynamic-pv
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: dynamic-storage
+  hostPath:
+    path: /mnt/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dynamic-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: dynamic-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dynamic-service
+spec:
+  type: NodePort
+  selector:
+    app: dynamic-app
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30001
