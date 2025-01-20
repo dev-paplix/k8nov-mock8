@@ -1,0 +1,58 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-storage
+provisioner: rancher.io/local-path
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stateful-app-service
+  labels:
+    app: stateful-app-service
+spec:
+  ports:
+  - port: 80
+  clusterIP: None
+  selector:
+    app: stateful-app
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stateful-app
+spec:
+  selector:
+    matchLabels:
+      app: stateful-app
+  serviceName: "stateful-app-service"
+  replicas: 3
+  minReadySeconds: 10 
+  template:
+    metadata:
+      labels:
+        app: stateful-app
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: stateful-app
+        image: mysql:5.7
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "example"
+        volumeMounts:
+        - name: pvc-data
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: pvc-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "fast-storage"
+      resources:
+        requests:
+          storage: 1Gi
