@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: secure-app
+  name: secure-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: secure-app
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: secure-app
+    spec:
+      containers:
+        - image: nginx:1.21
+          name: nginx
+          resources: {}
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-service
+spec:
+  selector:
+    app: secure-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-only-ui
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: secure-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ui

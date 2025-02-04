@@ -1,1 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: myapp-stable
+  name: myapp-stable
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: myapp-stable
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: myapp-stable
+    spec:
+      containers:
+      - image: nginx:1.20
+        name: nginx
+        resources: {}
+status: {}
 
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: myapp-canary
+  name: myapp-canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp-canary
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: myapp-canary
+    spec:
+      containers:
+      - image: nginx:1.21
+        name: nginx
+        resources: {}
+status: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp-stable
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80

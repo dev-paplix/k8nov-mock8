@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: dynamic-app
+  name: dynamic-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dynamic-app
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: dynamic-app
+    spec:
+      containers:
+        - image: busybox:1.34
+          name: app
+          command:
+            [
+              "sh",
+              "-c",
+              "echo 'Hello Kubernetes!' > /data/hello.txt && sleep 3600",
+            ]
+          volumeMounts:
+            - mountPath: /data
+              name: site-data
+          resources: {}
+      volumes:
+        - name: site-data
+          persistentVolumeClaim:
+            claimName: dynamic-pvc
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dynamic-service
+spec:
+  selector:
+    app: dynamic-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30001
+  type: NodePort
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: dynamic-storage
+provisioner: rancher.io/local-path
+reclaimPolicy: Delete
+allowVolumeExpansion: false
+volumeBindingMode: WaitForFirstConsumer
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dynamic-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: dynamic-storage
+  hostPath:
+    path: "/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dynamic-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: dynamic-storage
